@@ -1,5 +1,3 @@
-// handlers/callback_query.js
-
 import { api } from 'sdk';
 import { showDashboard } from 'lib/dashboard';
 import {
@@ -12,12 +10,18 @@ import {
 import {
   showFinanceReport,
   getFinanceSummary,
+  getFinanceSummaryForRange,
 } from 'lib/finance';
 import {
   setState,
   clearState,
   getState,
+  parseStateData,
 } from 'lib/state';
+import {
+  currentMonthRange,
+  previousMonthRange,
+} from 'lib/dates';
 
 // ─────────────────────────────────────────────
 // Admin Configuration
@@ -28,6 +32,8 @@ const ADMIN_IDS = [
 ];
 
 function isAdmin(userId) {
+  if (!userId) return false;
+  if (ADMIN_IDS.length === 0) return true;
   return ADMIN_IDS.includes(Number(userId));
 }
 
@@ -604,8 +610,8 @@ export default async function (callbackQuery, ctx) {
   // ─────────────────────────────────────
   if (data === 'ptype_renew' || data === 'ptype_others') {
     const state = await getState(userId);
-    if (state && state.data) {
-      const data_parsed = JSON.parse(state.data);
+    if (state && state.state === 'payment_type') {
+      const data_parsed = parseStateData(state);
       data_parsed.type = data === 'ptype_renew' ? 'renew' : 'others';
       await setState(userId, 'payment_description', data_parsed);
 
@@ -651,14 +657,12 @@ export default async function (callbackQuery, ctx) {
     return;
   }
   if (data === 'report_current_month') {
-    const { currentMonthRange } = await import('lib/dates');
     const range = currentMonthRange(new Date());
     const summary = await getFinanceSummaryForRange(range.start, range.end);
     await showFinanceReport(chatId, 'Current Month', summary);
     return;
   }
   if (data === 'report_previous_month') {
-    const { previousMonthRange } = await import('lib/dates');
     const range = previousMonthRange(new Date());
     const summary = await getFinanceSummaryForRange(range.start, range.end);
     await showFinanceReport(chatId, 'Previous Month', summary);

@@ -1,5 +1,3 @@
-// handlers/message.js
-
 import { api, db } from 'sdk';
 
 import {
@@ -12,9 +10,11 @@ import {
 import {
   addCustomer,
   searchCustomer,
+  showEditCustomer,
   renewCustomer,
   deleteCustomer,
   updateCustomer,
+  getLogsByCustomer,
 } from 'lib/customers';
 
 import {
@@ -24,6 +24,7 @@ import {
 
 import {
   escapeHtml,
+  formatMoney,
   isValidDate,
 } from 'lib/utils';
 
@@ -36,6 +37,8 @@ const ADMIN_IDS = [
 ];
 
 function isAdmin(userId) {
+  if (!userId) return false;
+  if (ADMIN_IDS.length === 0) return true;
   return ADMIN_IDS.includes(Number(userId));
 }
 
@@ -420,15 +423,7 @@ async function handleEditCustomer(message, state, data, text) {
     }
 
     data.customer_id = customerId;
-    // Keep state - the field selection comes from callback
-
-    await api.sendMessage({
-      chat_id: chatId,
-      text:
-        `Customer <b>${escapeHtml(customer.customer_id)}</b> found.\n\n` +
-        'Now select the field you want to edit from the buttons.',
-      parse_mode: 'HTML',
-    });
+    await showEditCustomer(chatId, null, customerId);
     return;
   }
 
@@ -568,7 +563,7 @@ async function handleAddPayment(message, state, data, text) {
         text:
           `✅ <b>Payment Added</b>\n\n` +
           `🆔 Customer ID: <b>${escapeHtml(payment.customer_id)}</b>\n` +
-          `💵 Amount: <b>${escapeHtml(payment.amount)}</b>\n` +
+          `💵 Amount: <b>${formatMoney(payment.amount)}</b>\n` +
           `📊 Type: <b>${escapeHtml(payment.type)}</b>\n` +
           `📝 Description: ${escapeHtml(payment.description || '-')}`,
         parse_mode: 'HTML',
@@ -616,7 +611,7 @@ async function handleAddExpense(message, state, data, text) {
         chat_id: chatId,
         text:
           `✅ <b>Expense Added</b>\n\n` +
-          `💵 Amount: <b>${escapeHtml(expense.amount)}</b>\n` +
+          `💵 Amount: <b>${formatMoney(expense.amount)}</b>\n` +
           `📝 Description: ${escapeHtml(expense.description || '-')}`,
         parse_mode: 'HTML',
         reply_markup: mainMenu(),
@@ -643,8 +638,6 @@ async function handleCustomerLogsByCustomer(message, text) {
   }
 
   await clearState(userId);
-
-  const { getLogsByCustomer } = await import('lib/customers');
   await getLogsByCustomer(chatId, null, customerId);
 }
 
