@@ -108,6 +108,18 @@ async function handleStart(message) {
   const userId = getUserId(message);
   await clearState(userId);
 
+  // Store admin chatId in settings table for daily scheduled crons
+  await db.run(
+    `
+    INSERT INTO settings (key, value)
+    VALUES ('admin_chat_id', :chat_id)
+    ON CONFLICT(key) DO UPDATE SET value = :chat_id
+    `,
+    {
+      ':chat_id': String(message.chat.id),
+    }
+  );
+
   await api.sendMessage({
     chat_id: message.chat.id,
     text: "Hello Boss. I'm Ready For any Task.",

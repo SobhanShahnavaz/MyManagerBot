@@ -1,0 +1,12 @@
+{
+  "name": "BotManagerSobiJS",
+  "schedules": [
+    {
+      "name": "daily_reminders",
+      "handler": "reminder",
+      "cron": "0 9 * * *",
+      "timezone": "Asia/Tehran",
+      "description": "Daily customer renewal reminders at 09:00 Tehran time"
+    }
+  ]
+}
